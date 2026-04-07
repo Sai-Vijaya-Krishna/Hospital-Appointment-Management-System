@@ -1,0 +1,135 @@
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',sans-serif; background:#f4f6fb; color:#333; }
+
+/* NAVBAR */
+.navbar {
+  display:flex; justify-content:space-between; align-items:center;
+  background:#1565c0; padding:14px 32px; position:sticky; top:0; z-index:1000;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+.brand { color:#fff; font-size:1.4rem; font-weight:700; text-decoration:none; }
+.nav-links a { color:#fff; text-decoration:none; margin-left:20px; font-size:0.92rem; font-weight:500; }
+.nav-links a:hover { text-decoration:underline; }
+
+/* HERO */
+.hero { background:linear-gradient(135deg,#1565c0,#1976d2); color:#fff; padding:70px 32px; text-align:center; }
+.hero h1 { font-size:2.8rem; margin-bottom:14px; }
+.hero h1 span { color:#bbdefb; }
+.hero p { font-size:1.1rem; opacity:.9; margin-bottom:28px; }
+
+/* BUTTONS */
+.btn-primary { background:#fff; color:#1565c0; padding:13px 30px; border:none; border-radius:50px; font-size:0.95rem; font-weight:700; cursor:pointer; text-decoration:none; display:inline-block; transition:transform .2s; }
+.btn-primary:hover { transform:scale(1.04); }
+.btn-blue { background:#1565c0; color:#fff; padding:10px 22px; border:none; border-radius:8px; font-size:0.9rem; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; transition:background .2s; }
+.btn-blue:hover { background:#0d47a1; }
+.btn-outline { background:transparent; color:#1565c0; padding:10px 22px; border:2px solid #1565c0; border-radius:8px; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all .2s; }
+.btn-outline:hover { background:#1565c0; color:#fff; }
+.btn-green  { background:#2e7d32; color:#fff; padding:8px 18px; border:none; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer; }
+.btn-red    { background:#c62828; color:#fff; padding:8px 18px; border:none; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer; }
+.btn-orange { background:#e65100; color:#fff; padding:8px 18px; border:none; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer; }
+
+/* CARDS */
+.card { background:#fff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,0.08); overflow:hidden; transition:transform .2s; }
+.card:hover { transform:translateY(-3px); }
+.card-body { padding:18px; }
+
+/* GRID */
+.grid-2 { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:20px; }
+.grid-3 { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:18px; }
+.grid-4 { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:16px; }
+
+/* PAGE */
+.page { padding:28px 32px; max-width:1200px; margin:0 auto; }
+.page-title { font-size:1.5rem; font-weight:700; margin-bottom:6px; }
+.page-sub { color:#888; font-size:0.88rem; margin-bottom:24px; }
+
+/* FORM */
+.form-box { background:#fff; padding:36px; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,0.1); max-width:460px; margin:40px auto; }
+.form-box h2 { text-align:center; margin-bottom:24px; color:#1565c0; }
+.form-group { margin-bottom:16px; }
+.form-group label { display:block; margin-bottom:5px; font-weight:600; font-size:0.87rem; color:#444; }
+.form-group input, .form-group select, .form-group textarea {
+  width:100%; padding:11px 13px; border:1.5px solid #ddd; border-radius:10px; font-size:0.92rem; transition:border-color .2s;
+}
+.form-group input:focus, .form-group select:focus { outline:none; border-color:#1565c0; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.form-submit { width:100%; padding:13px; background:#1565c0; color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; }
+.form-submit:hover { background:#0d47a1; }
+.form-link { text-align:center; margin-top:14px; font-size:0.88rem; color:#666; }
+.form-link a { color:#1565c0; font-weight:600; text-decoration:none; }
+
+/* ALERTS */
+.alert { padding:11px 16px; border-radius:10px; margin-bottom:14px; font-size:0.88rem; }
+.alert-success { background:#e8f5e9; color:#2e7d32; border-left:4px solid #4caf50; }
+.alert-error   { background:#ffebee; color:#c62828; border-left:4px solid #f44336; }
+.alert-info    { background:#e3f2fd; color:#1565c0; border-left:4px solid #2196f3; }
+
+/* BADGE */
+.badge { padding:3px 11px; border-radius:20px; font-size:0.75rem; font-weight:600; }
+.badge-pending   { background:#fff3e0; color:#e65100; }
+.badge-confirmed { background:#e3f2fd; color:#1565c0; }
+.badge-completed { background:#e8f5e9; color:#2e7d32; }
+.badge-cancelled { background:#ffebee; color:#c62828; }
+
+/* TABLE */
+.tbl { width:100%; border-collapse:collapse; background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08); }
+.tbl th { background:#1565c0; color:#fff; padding:13px 15px; text-align:left; font-size:0.87rem; }
+.tbl td { padding:11px 15px; border-bottom:1px solid #f0f0f0; font-size:0.87rem; }
+.tbl tr:hover td { background:#f5f8ff; }
+
+/* ADMIN LAYOUT */
+.admin-layout { display:flex; min-height:100vh; }
+.sidebar { width:240px; background:#0d47a1; color:#fff; padding:24px 0; position:fixed; height:100vh; overflow-y:auto; }
+.sidebar .brand { padding:0 22px 22px; font-size:1.2rem; border-bottom:1px solid rgba(255,255,255,.15); }
+.sidebar a { display:block; padding:13px 22px; color:rgba(255,255,255,.8); text-decoration:none; font-size:0.9rem; transition:all .2s; }
+.sidebar a:hover, .sidebar a.active { background:#1565c0; color:#fff; }
+.main-content { margin-left:240px; padding:28px 32px; flex:1; }
+
+/* STATS */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:18px; margin-bottom:28px; }
+.stat-card { background:#fff; padding:22px; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,0.08); text-align:center; }
+.stat-num { font-size:2.2rem; font-weight:800; color:#1565c0; }
+.stat-label { color:#888; font-size:0.82rem; margin-top:4px; }
+
+/* DOCTOR CARD */
+.doc-card { background:#fff; border-radius:16px; padding:20px; box-shadow:0 2px 12px rgba(0,0,0,0.08); }
+.doc-avatar { width:60px; height:60px; border-radius:50%; background:#1565c0; display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:#fff; margin-bottom:12px; }
+.doc-name { font-weight:700; font-size:1rem; margin-bottom:3px; }
+.doc-spec { color:#1565c0; font-size:0.82rem; font-weight:600; margin-bottom:6px; }
+.doc-info { font-size:0.78rem; color:#888; margin-bottom:4px; }
+.doc-fee  { color:#2e7d32; font-weight:700; font-size:0.95rem; }
+.stars    { color:#f7931e; font-size:0.85rem; }
+
+/* TOKEN DISPLAY */
+.token-display { background:#1565c0; color:#fff; border-radius:20px; padding:30px; text-align:center; }
+.token-now { font-size:5rem; font-weight:900; line-height:1; }
+.token-label { font-size:0.9rem; opacity:.8; margin-top:6px; }
+
+/* MODAL */
+.modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9000; align-items:center; justify-content:center; }
+.modal-bg.open { display:flex; }
+.modal { background:#fff; border-radius:20px; padding:30px; max-width:520px; width:92%; box-shadow:0 8px 32px rgba(0,0,0,.2); max-height:90vh; overflow-y:auto; }
+.modal h3 { margin-bottom:18px; color:#1565c0; }
+
+/* APPOINTMENT CARD */
+.appt-card { background:#fff; border-radius:14px; padding:18px; margin-bottom:14px; box-shadow:0 2px 10px rgba(0,0,0,.07); border-left:4px solid #1565c0; }
+.appt-card.completed { border-left-color:#4caf50; }
+.appt-card.cancelled { border-left-color:#f44336; opacity:.7; }
+.appt-card.pending   { border-left-color:#f7931e; }
+
+/* FOOTER */
+.footer { background:#0d47a1; color:rgba(255,255,255,.7); text-align:center; padding:20px; margin-top:50px; font-size:0.85rem; }
+
+/* QUEUE CARD */
+.queue-card { background:#fff; border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:0 2px 10px rgba(0,0,0,.07); display:flex; align-items:center; gap:16px; }
+.q-token { width:48px; height:48px; border-radius:50%; background:#1565c0; color:#fff; font-size:1.1rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.q-token.active { background:#2e7d32; animation:qpulse 1.5s infinite; }
+@keyframes qpulse { 0%,100%{box-shadow:0 0 0 0 rgba(46,125,50,.4)} 50%{box-shadow:0 0 0 10px rgba(46,125,50,0)} }
+
+@media(max-width:768px) {
+  .page { padding:16px; }
+  .hero h1 { font-size:1.8rem; }
+  .admin-layout .sidebar { display:none; }
+  .main-content { margin-left:0; }
+  .form-row { grid-template-columns:1fr; }
+}

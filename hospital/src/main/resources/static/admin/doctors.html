@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Doctors - Admin</title>
+<link rel="stylesheet" href="/css/style.css"/>
+<style>
+.modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55);
+  z-index:9000; align-items:center; justify-content:center; }
+.modal-bg.open { display:flex; }
+.modal { background:#fff; border-radius:20px; padding:28px; max-width:540px;
+  width:92%; box-shadow:0 8px 32px rgba(0,0,0,.2); max-height:90vh; overflow-y:auto; }
+.modal h3 { margin-bottom:18px; color:#1565c0; }
+</style>
+</head>
+<body>
+<div class="admin-layout">
+  <div class="sidebar">
+    <div class="brand">🏥 Admin Panel</div>
+    <a href="/admin/dashboard.html">📊 Dashboard</a>
+    <a href="/admin/appointments.html">📋 Appointments</a>
+    <a href="/admin/doctors.html" class="active">👨‍⚕️ Doctors</a>
+    <a href="/admin/departments.html">🏥 Departments</a>
+    <a href="/admin/patients.html">👥 Patients</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </div>
+
+  <div class="main-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <h1>Manage Doctors</h1>
+        <p style="color:#888;font-size:.85rem;margin-top:4px">
+          All registered doctors — <span id="docCount">0</span> total
+        </p>
+      </div>
+      <button class="btn-blue" onclick="openModal()"
+              style="padding:12px 24px;font-size:.95rem">+ Add Doctor</button>
+    </div>
+
+    <div id="msg"></div>
+    <div class="grid-2" id="docGrid">
+      <p style="color:#aaa;padding:40px">Loading doctors...</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── Add Doctor Modal ── -->
+<div class="modal-bg" id="addModal">
+  <div class="modal">
+    <h3>👨‍⚕️ Add New Doctor</h3>
+    <div id="modalMsg"></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" id="dName" placeholder="Dr. Full Name"/>
+      </div>
+      <div class="form-group">
+        <label>Email *</label>
+        <input type="email" id="dEmail" placeholder="doctor@hospital.com"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" id="dPhone" placeholder="Phone number"/>
+      </div>
+      <div class="form-group">
+        <label>Department *</label>
+        <select id="dDept">
+          <option value="">-- Select Department --</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Specialization *</label>
+        <input type="text" id="dSpec" placeholder="e.g. Cardiologist"/>
+      </div>
+      <div class="form-group">
+        <label>Qualification *</label>
+        <input type="text" id="dQual" placeholder="e.g. MBBS, MD"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Experience (years) *</label>
+        <input type="number" id="dExp" placeholder="e.g. 5" min="0"/>
+      </div>
+      <div class="form-group">
+        <label>Consultation Fee (₹) *</label>
+        <input type="number" id="dFee" placeholder="e.g. 500" min="0"/>
+      </div>
+    </div>
+    <div style="background:#e3f2fd;border-radius:10px;padding:10px 14px;
+                font-size:.82rem;color:#1565c0;margin-bottom:16px">
+      ℹ️ Default login password will be: <strong>doctor123</strong>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn-blue" style="flex:1;padding:12px" onclick="saveDoctor()">
+        ✅ Add Doctor
+      </button>
+      <button class="btn-outline" style="flex:1;padding:12px" onclick="closeModal()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+const role  = localStorage.getItem('role');
+if (!token || role !== 'ADMIN') window.location.href = '/auth/login.html';
+
+let deptList = [];
+
+// ── Load departments for dropdown
+async function loadDepts() {
+  try {
+    const res   = await fetch('/api/public/departments');
+    deptList    = await res.json();
+    const sel   = document.getElementById('dDept');
+    sel.innerHTML = '<option value="">-- Select Department --</option>';
+    deptList.forEach(d => {
+      const o = document.createElement('option');
+      o.value = d.id; o.textContent = d.name;
+      sel.appendChild(o);
+    });
+  } catch(e) { console.error('Dept load error:', e); }
+}
+
+// ── Load doctors list
+async function loadDoctors() {
+  try {
+    const res  = await fetch('/api/admin/doctors',
+      { headers: { 'Authorization': 'Bearer ' + token } });
+
+    if (!res.ok) {
+      document.getElementById('docGrid').innerHTML =
+        '<p style="color:red;padding:20px">Error loading doctors. Status: ' + res.status + '</p>';
+      return;
+    }
+
+    const docs = await res.json();
+    document.getElementById('docCount').textContent = docs.length;
+
+    if (!docs.length) {
+      document.getElementById('docGrid').innerHTML =
+        '<p style="color:#aaa;padding:40px">No doctors found</p>';
+      return;
+    }
+
+    document.getElementById('docGrid').innerHTML = docs.map(d => `
+      <div class="doc-card">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div class="doc-avatar">👨‍⚕️</div>
+          <div style="flex:1">
+            <div class="doc-name">${d.user?.name || 'Unknown'}</div>
+            <div class="doc-spec">${d.specialization || ''}</div>
+            <div class="stars">
+              ${'⭐'.repeat(Math.round(d.rating || 4))}
+              <span style="color:#888;font-size:.75rem">${d.rating || 4.5}</span>
+            </div>
+          </div>
+          <span class="badge ${d.available ? 'badge-confirmed' : 'badge-cancelled'}">
+            ${d.available ? '✅ Active' : '❌ Inactive'}
+          </span>
+        </div>
+        <div class="doc-info">🏥 ${d.department?.name || '--'}</div>
+        <div class="doc-info">🎓 ${d.qualification || '--'}</div>
+        <div class="doc-info">📧 ${d.user?.email || '--'}</div>
+        <div class="doc-info">⏱ ${d.experienceYears || 0} yrs experience</div>
+        <div class="doc-info">📅 ${d.availableDays || 'Mon-Fri'}
+          · ${d.availableFrom || '09:00'} – ${d.availableTo || '17:00'}</div>
+        <div style="display:flex;justify-content:space-between;
+                    align-items:center;margin-top:12px">
+          <span class="doc-fee">₹${d.consultationFee || 0} / visit</span>
+          <button class="${d.available ? 'btn-red' : 'btn-green'}"
+                  onclick="toggleDoc(${d.id}, this)">
+            ${d.available ? 'Deactivate' : 'Activate'}
+          </button>
+        </div>
+      </div>`).join('');
+
+  } catch(e) {
+    console.error('Doctors load error:', e);
+    document.getElementById('docGrid').innerHTML =
+      '<p style="color:red;padding:20px">Failed to load doctors: ' + e.message + '</p>';
+  }
+}
+
+// ── Toggle doctor active/inactive
+async function toggleDoc(id, btn) {
+  try {
+    const res  = await fetch('/api/admin/doctors/' + id + '/toggle', {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (res.ok) { loadDoctors(); }
+    else        { showMsg('Toggle failed', 'error'); }
+  } catch(e) { showMsg('Error: ' + e.message, 'error'); }
+}
+
+// ── Open modal
+function openModal() {
+  // Clear form
+  document.getElementById('dName').value  = '';
+  document.getElementById('dEmail').value = '';
+  document.getElementById('dPhone').value = '';
+  document.getElementById('dSpec').value  = '';
+  document.getElementById('dQual').value  = '';
+  document.getElementById('dExp').value   = '';
+  document.getElementById('dFee').value   = '';
+  document.getElementById('dDept').value  = '';
+  document.getElementById('modalMsg').innerHTML = '';
+  document.getElementById('addModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('addModal').classList.remove('open');
+}
+
+// ── Save new doctor
+async function saveDoctor() {
+  const name   = document.getElementById('dName').value.trim();
+  const email  = document.getElementById('dEmail').value.trim();
+  const phone  = document.getElementById('dPhone').value.trim();
+  const deptId = document.getElementById('dDept').value;
+  const spec   = document.getElementById('dSpec').value.trim();
+  const qual   = document.getElementById('dQual').value.trim();
+  const exp    = document.getElementById('dExp').value;
+  const fee    = document.getElementById('dFee').value;
+
+  if (!name)   { showModalMsg('Please enter doctor name', 'error'); return; }
+  if (!email)  { showModalMsg('Please enter email', 'error'); return; }
+  if (!deptId) { showModalMsg('Please select a department', 'error'); return; }
+  if (!spec)   { showModalMsg('Please enter specialization', 'error'); return; }
+  if (!qual)   { showModalMsg('Please enter qualification', 'error'); return; }
+  if (!exp)    { showModalMsg('Please enter experience years', 'error'); return; }
+  if (!fee)    { showModalMsg('Please enter consultation fee', 'error'); return; }
+
+  try {
+    const res  = await fetch('/api/admin/doctors', {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({
+        name, email, phone, departmentId: deptId,
+        specialization: spec, qualification: qual,
+        experienceYears: exp, consultationFee: fee
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.message) {
+      closeModal();
+      showMsg('✅ Doctor added successfully! Password: doctor123', 'success');
+      loadDoctors();
+    } else {
+      showModalMsg(data.error || 'Failed to add doctor', 'error');
+    }
+  } catch(e) {
+    showModalMsg('Network error: ' + e.message, 'error');
+  }
+}
+
+function showMsg(m, t) {
+  document.getElementById('msg').innerHTML =
+    `<div class="alert alert-${t}">${m}</div>`;
+  setTimeout(() => document.getElementById('msg').innerHTML = '', 4000);
+}
+
+function showModalMsg(m, t) {
+  document.getElementById('modalMsg').innerHTML =
+    `<div class="alert alert-${t}">${m}</div>`;
+}
+
+function logout() { localStorage.clear(); window.location.href = '/auth/login.html'; }
+
+// ── Init
+loadDepts();
+loadDoctors();
+</script>
+</body>
+</html>

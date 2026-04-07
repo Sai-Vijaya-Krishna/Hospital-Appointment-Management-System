@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Patients - Admin</title><link rel="stylesheet" href="/css/style.css"/></head>
+<body>
+<div class="admin-layout">
+  <div class="sidebar">
+    <div class="brand">🏥 Admin Panel</div>
+    <a href="/admin/dashboard.html">📊 Dashboard</a>
+    <a href="/admin/appointments.html">📋 Appointments</a>
+    <a href="/admin/doctors.html">👨‍⚕️ Doctors</a>
+    <a href="/admin/departments.html">🏥 Departments</a>
+    <a href="/admin/patients.html" class="active">👥 Patients</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </div>
+  <div class="main-content">
+    <h1 style="margin-bottom:6px">All Patients</h1>
+    <p style="color:#888;font-size:.85rem;margin-bottom:20px">Registered patients in the system</p>
+    <input type="text" id="search" placeholder="Search by name or email..." oninput="filterPatients()"
+      style="padding:10px 14px;border:1.5px solid #ddd;border-radius:10px;font-size:.9rem;width:300px;margin-bottom:20px"/>
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>Age</th><th>Blood Group</th></tr></thead>
+      <tbody id="body"></tbody>
+    </table>
+  </div>
+</div>
+<script>
+const token=localStorage.getItem('token'),role=localStorage.getItem('role');
+if(!token||role!=='ADMIN') window.location.href='/auth/login.html';
+let all=[];
+
+async function load() {
+  const res=await fetch('/api/admin/patients',{headers:{'Authorization':'Bearer '+token}});
+  all=await res.json(); render(all);
+}
+
+function render(data) {
+  document.getElementById('body').innerHTML=data.map((p,i)=>`
+    <tr><td>${i+1}</td><td>${p.name}</td><td>${p.email}</td>
+    <td>${p.phone||'-'}</td><td>${p.age||'-'}</td>
+    <td>${p.bloodGroup||'-'}</td></tr>`).join('');
+}
+
+function filterPatients() {
+  const s=document.getElementById('search').value.toLowerCase();
+  render(all.filter(p=>p.name?.toLowerCase().includes(s)||p.email?.toLowerCase().includes(s)));
+}
+function logout(){localStorage.clear();window.location.href='/auth/login.html';}
+load();
+</script>
+</body></html>

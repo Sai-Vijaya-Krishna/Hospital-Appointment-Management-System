@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Token Queue - City Hospital</title><link rel="stylesheet" href="/css/style.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="brand">🏥 City Hospital</a>
+  <div class="nav-links"><a href="/patient/appointments.html">← Back</a></div>
+</nav>
+<div class="page" style="max-width:600px">
+  <div class="page-title">Live Token Queue 🔢</div>
+  <div class="page-sub">Real-time queue updates for your doctor</div>
+
+  <div style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap">
+    <div class="token-display" style="flex:1;min-width:140px">
+      <div style="font-size:.82rem;opacity:.8;margin-bottom:4px">NOW SERVING</div>
+      <div class="token-num" id="nowToken" style="font-size:4rem;font-weight:900;line-height:1">--</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:#e3f2fd;border-radius:20px;padding:24px;text-align:center">
+      <div style="font-size:.82rem;color:#1565c0;margin-bottom:4px">YOUR TOKEN</div>
+      <div id="myToken" style="font-size:4rem;font-weight:900;color:#1565c0;line-height:1">--</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:#fff;border-radius:20px;padding:24px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.08)">
+      <div style="font-size:.82rem;color:#888;margin-bottom:4px">AHEAD OF YOU</div>
+      <div id="ahead" style="font-size:4rem;font-weight:900;color:#f7931e;line-height:1">--</div>
+    </div>
+  </div>
+
+  <div id="queueList"></div>
+
+  <div style="background:#e8f5e9;border-radius:14px;padding:16px;margin-top:20px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:1.5rem">🔴</span>
+    <div><div style="font-weight:700;font-size:.9rem;color:#2e7d32">Live Updates ON</div>
+    <div style="font-size:.78rem;color:#666">Queue refreshes automatically</div></div>
+  </div>
+</div>
+<script>
+const token    = localStorage.getItem('token');
+const params   = new URLSearchParams(window.location.search);
+const doctorId = params.get('doctorId');
+
+async function loadQueue() {
+  const res  = await fetch('/api/doctor/queue',{headers:{'Authorization':'Bearer '+token}});
+  const data = await res.json();
+  renderQueue(data);
+}
+
+function renderQueue(queue) {
+  if (!queue.length) { document.getElementById('queueList').innerHTML='<p style="text-align:center;color:#aaa;padding:30px">No appointments today</p>'; return; }
+  const active = queue.find(q=>q.status==='CONFIRMED');
+  const nowNum = active ? active.token : '--';
+  document.getElementById('nowToken').textContent = nowNum;
+
+  const myToken = parseInt(localStorage.getItem('myToken')||'0');
+  document.getElementById('myToken').textContent = myToken || '--';
+  const ahead = queue.filter(q=>q.status==='CONFIRMED'&&q.token<myToken).length;
+  document.getElementById('ahead').textContent = ahead;
+
+  document.getElementById('queueList').innerHTML = `
+    <div style="font-weight:700;font-size:.88rem;color:#888;margin-bottom:10px;text-transform:uppercase">Today's Queue</div>
+    ${queue.map(q=>`
+      <div class="queue-card">
+        <div class="q-token ${q.status==='CONFIRMED'&&q.token===active?.token?'active':''}">#${q.token}</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:.9rem">${q.patientName}</div>
+          <div style="font-size:.78rem;color:#888">${q.slot}</div>
+        </div>
+        <span class="badge badge-${q.status?.toLowerCase()}">${q.status}</span>
+      </div>`).join('')}`;
+}
+
+function connectWS() {
+  try {
+    const sock = new SockJS('/ws');
+    const cli  = Stomp.over(sock); cli.debug=null;
+    cli.connect({},()=>{
+      cli.subscribe('/topic/queue/'+doctorId, msg=>{
+        const u=JSON.parse(msg.body);
+        loadQueue();
+      });
+    });
+  } catch(e){}
+}
+
+if (token) { loadQueue(); connectWS(); }
+</script>
+</body></html>

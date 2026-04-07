@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Login - City Hospital</title><link rel="stylesheet" href="/css/style.css"/></head>
+<body>
+<nav class="navbar"><a href="/" class="brand">🏥 City Hospital</a>
+  <div class="nav-links"><a href="/auth/register.html">Register</a></div>
+</nav>
+<div class="form-box">
+  <h2>👋 Welcome Back</h2>
+  <div id="msg"></div>
+  <div class="form-group"><label>Email</label><input type="email" id="email" placeholder="Enter your email"/></div>
+  <div class="form-group"><label>Password</label><input type="password" id="password" placeholder="Enter password"/></div>
+  <button class="form-submit" onclick="login()">Login</button>
+  <div class="form-link">New patient? <a href="/auth/register.html">Register here</a></div>
+  <div style="margin-top:12px;padding:12px;background:#f5f5f5;border-radius:10px;font-size:0.78rem;color:#888">
+    <b>Demo credentials:</b><br/>
+    Admin: admin@hospital.com / admin123<br/>
+    Doctor: ravi@hospital.com / doctor123
+  </div>
+</div>
+<script>
+async function login() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  if (!email || !password) { showMsg('Fill all fields','error'); return; }
+  const res  = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,password}) });
+  const data = await res.json();
+  if (data.token) {
+    localStorage.setItem('token',data.token); localStorage.setItem('role',data.role);
+    localStorage.setItem('name',data.name);   localStorage.setItem('email',data.email);
+    if (data.role==='ADMIN')  window.location.href='/admin/dashboard.html';
+    else if (data.role==='DOCTOR') window.location.href='/doctor/queue.html';
+    else window.location.href='/patient/doctors.html';
+  } else { showMsg(data.error||'Login failed','error'); }
+}
+function showMsg(m,t){ document.getElementById('msg').innerHTML=`<div class="alert alert-${t}">${m}</div>`; }
+document.addEventListener('keydown',e=>{ if(e.key==='Enter') login(); });
+</script>
+</body></html>

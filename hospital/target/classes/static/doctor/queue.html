@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Doctor Queue - City Hospital</title><link rel="stylesheet" href="/css/style.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script></head>
+<body>
+<div class="admin-layout">
+  <div class="sidebar">
+    <div class="brand">👨‍⚕️ Doctor Portal</div>
+    <a href="/doctor/queue.html" class="active">📋 Today's Queue</a>
+    <a href="/doctor/prescription.html">💊 Write Prescription</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </div>
+  <div class="main-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <h1>Today's Queue</h1>
+      <div style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:#4caf50;font-weight:600">
+        <span style="width:8px;height:8px;background:#4caf50;border-radius:50%;display:inline-block;animation:blink 1.2s infinite"></span> Live
+      </div>
+    </div>
+    <p style="color:#888;margin-bottom:24px;font-size:.88rem" id="docInfo">Loading...</p>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num" id="total">0</div><div class="stat-label">Total Today</div></div>
+      <div class="stat-card"><div class="stat-num" id="waiting">0</div><div class="stat-label">Waiting</div></div>
+      <div class="stat-card"><div class="stat-num" id="done">0</div><div class="stat-label">Completed</div></div>
+    </div>
+
+    <div id="queueList"></div>
+  </div>
+</div>
+<style>@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}</style>
+<script>
+const token = localStorage.getItem('token');
+const role  = localStorage.getItem('role');
+if (!token||role!=='DOCTOR') window.location.href='/auth/login.html';
+document.getElementById('docInfo').textContent = 'Dr. '+localStorage.getItem('name')+' · '+new Date().toDateString();
+
+async function loadQueue() {
+  const res  = await fetch('/api/doctor/queue',{headers:{'Authorization':'Bearer '+token}});
+  const data = await res.json();
+  document.getElementById('total').textContent   = data.length;
+  document.getElementById('waiting').textContent  = data.filter(a=>a.status==='CONFIRMED').length;
+  document.getElementById('done').textContent     = data.filter(a=>a.status==='COMPLETED').length;
+
+  if (!data.length) { document.getElementById('queueList').innerHTML='<div style="text-align:center;padding:60px;color:#aaa"><div style="font-size:3.5rem">🏥</div><p>No appointments today</p></div>'; return; }
+
+  document.getElementById('queueList').innerHTML = data.map(a=>`
+    <div class="queue-card" id="qa-${a.id}">
+      <div class="q-token ${a.status==='CONFIRMED'?'active':''}">#${a.token}</div>
+      <div style="flex:1">
+        <div style="font-weight:700">${a.patientName}</div>
+        <div style="font-size:.78rem;color:#888">${a.slot} · ${a.patientPhone||''}</div>
+        ${a.symptoms?`<div style="font-size:.78rem;color:#666;margin-top:3px">📋 ${a.symptoms}</div>`:''}
+      </div>
+      <span class="badge badge-${a.status?.toLowerCase()}">${a.status}</span>
+      <div style="display:flex;gap:6px;flex-direction:column">
+        ${a.status==='CONFIRMED'?`
+          <button class="btn-green" style="font-size:.78rem;padding:6px 12px" onclick="markComplete(${a.id})">✅ Complete</button>
+          <button class="btn-blue" style="font-size:.78rem;padding:6px 12px" onclick="writePrescription(${a.id})">💊 Prescribe</button>`:''}
+        ${a.status==='COMPLETED'?`<button class="btn-blue" style="font-size:.78rem;padding:6px 12px" onclick="writePrescription(${a.id})">💊 View Rx</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+async function markComplete(id) {
+  await fetch(`/api/doctor/appointment/${id}/status`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({status:'COMPLETED'})});
+  loadQueue();
+}
+
+function writePrescription(id) { window.location.href=`/doctor/prescription.html?apptId=${id}`; }
+
+function connectWS() {
+  try {
+    const sock=new SockJS('/ws'); const cli=Stomp.over(sock); cli.debug=null;
+    cli.connect({},()=>{ cli.subscribe('/topic/queue/new',()=>loadQueue()); });
+  } catch(e){}
+}
+
+function logout() { localStorage.clear(); window.location.href='/auth/login.html'; }
+loadQueue(); connectWS();
+setInterval(loadQueue, 30000);
+</script>
+</body></html>

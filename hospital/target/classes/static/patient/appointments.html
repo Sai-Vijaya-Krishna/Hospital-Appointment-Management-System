@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>My Appointments - City Hospital</title><link rel="stylesheet" href="/css/style.css"/></head>
+<body>
+<nav class="navbar">
+  <a href="/" class="brand">🏥 City Hospital</a>
+  <div class="nav-links">
+    <a href="/patient/doctors.html">Find Doctors</a>
+    <a href="/patient/prescriptions.html">Prescriptions</a>
+    <a href="/patient/queue.html">Token Queue</a>
+    <a href="#" onclick="logout()">Logout</a>
+  </div>
+</nav>
+<div class="page">
+  <div class="page-title">My Appointments 📋</div>
+  <div class="page-sub">All your past and upcoming appointments</div>
+  <div id="msg"></div>
+  <div id="list"></div>
+</div>
+<script>
+const token = localStorage.getItem('token');
+if (!token) window.location.href='/auth/login.html';
+
+async function load() {
+  const res  = await fetch('/api/appointments/my',{headers:{'Authorization':'Bearer '+token}});
+  const data = await res.json();
+  if (!data.length) { document.getElementById('list').innerHTML='<div style="text-align:center;padding:60px;color:#aaa"><div style="font-size:3.5rem">📋</div><p>No appointments yet</p><br/><a href="/patient/doctors.html" class="btn-blue">Book Now</a></div>'; return; }
+  document.getElementById('list').innerHTML = data.map(a=>`
+    <div class="appt-card ${a.status?.toLowerCase()}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div>
+          <div style="font-weight:700;font-size:1rem">${a.doctorName}</div>
+          <div style="color:#1565c0;font-size:.82rem;font-weight:600">${a.specialization}</div>
+        </div>
+        <div style="text-align:right">
+          <span class="badge badge-${a.status?.toLowerCase()}">${a.status}</span>
+          <div style="font-size:.75rem;color:#aaa;margin-top:3px">Token #${a.token||'--'}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:.83rem;color:#666;margin-bottom:12px">
+        <span>📅 ${a.date}</span>
+        <span>🕐 ${a.slot}</span>
+        <span>🏥 ${a.department}</span>
+      </div>
+      ${a.symptoms ? `<div style="font-size:.82rem;color:#888">Symptoms: ${a.symptoms}</div>` : ''}
+      <div style="display:flex;gap:8px;margin-top:12px">
+        ${a.status==='CONFIRMED'?`<button class="btn-orange" onclick="viewQueue(${a.doctorId})">📍 View Queue</button>`:''}
+        ${a.status==='COMPLETED'?`<button class="btn-blue" onclick="viewPrescription(${a.id})">💊 View Prescription</button>`:''}
+        ${a.status==='CONFIRMED'?`<button class="btn-red" onclick="cancel(${a.id})">Cancel</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+async function cancel(id) {
+  if (!confirm('Cancel this appointment?')) return;
+  await fetch(`/api/appointments/${id}/status`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({status:'CANCELLED'})});
+  load();
+}
+
+function viewQueue(doctorId) { window.location.href=`/patient/queue.html?doctorId=${doctorId}`; }
+function viewPrescription(apptId) { window.location.href=`/patient/prescriptions.html?apptId=${apptId}`; }
+function logout() { localStorage.clear(); window.location.href='/'; }
+load();
+</script>
+</body></html>

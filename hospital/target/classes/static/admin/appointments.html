@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Appointments - Admin</title><link rel="stylesheet" href="/css/style.css"/></head>
+<body>
+<div class="admin-layout">
+  <div class="sidebar">
+    <div class="brand">🏥 Admin Panel</div>
+    <a href="/admin/dashboard.html">📊 Dashboard</a>
+    <a href="/admin/appointments.html" class="active">📋 Appointments</a>
+    <a href="/admin/doctors.html">👨‍⚕️ Doctors</a>
+    <a href="/admin/departments.html">🏥 Departments</a>
+    <a href="/admin/patients.html">👥 Patients</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </div>
+  <div class="main-content">
+    <h1 style="margin-bottom:20px">All Appointments</h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+      <button class="cat-btn active" onclick="filter('ALL',this)" style="padding:8px 16px;border:1.5px solid #1565c0;border-radius:50px;background:#1565c0;color:#fff;font-size:.82rem;font-weight:600;cursor:pointer">All</button>
+      <button class="cat-btn" onclick="filter('CONFIRMED',this)" style="padding:8px 16px;border:1.5px solid #1565c0;border-radius:50px;background:#fff;color:#1565c0;font-size:.82rem;font-weight:600;cursor:pointer">Confirmed</button>
+      <button class="cat-btn" onclick="filter('COMPLETED',this)" style="padding:8px 16px;border:1.5px solid #4caf50;border-radius:50px;background:#fff;color:#4caf50;font-size:.82rem;font-weight:600;cursor:pointer">Completed</button>
+      <button class="cat-btn" onclick="filter('CANCELLED',this)" style="padding:8px 16px;border:1.5px solid #f44336;border-radius:50px;background:#fff;color:#f44336;font-size:.82rem;font-weight:600;cursor:pointer">Cancelled</button>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Patient</th><th>Doctor</th><th>Department</th><th>Date & Time</th><th>Token</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody id="body"></tbody>
+    </table>
+  </div>
+</div>
+<script>
+const token=localStorage.getItem('token'),role=localStorage.getItem('role');
+if(!token||role!=='ADMIN') window.location.href='/auth/login.html';
+let all=[];
+
+async function load() {
+  const res=await fetch('/api/admin/appointments',{headers:{'Authorization':'Bearer '+token}});
+  all=await res.json(); render(all);
+}
+
+function render(data) {
+  document.getElementById('body').innerHTML = data.map(a => `
+    <tr>
+      <td>#${a.id}</td>
+      <td>${a.patient?.name || ''}<br/>
+          <small style="color:#aaa">${a.patient?.email || ''}</small></td>
+      <td>${a.doctor?.name || ''}</td>
+      <td>${a.doctor?.department || ''}</td>
+      <td>${a.appointmentDate || ''}<br/>
+          <small>${a.timeSlot || ''}</small></td>
+      <td><b>#${a.tokenNumber || '--'}</b></td>
+      <td><span class="badge badge-${a.status?.toLowerCase()}">${a.status}</span></td>
+      <td>${a.status === 'CONFIRMED'
+        ? `<button class="btn-red" style="font-size:.75rem;padding:5px 10px"
+             onclick="cancel(${a.id})">Cancel</button>`
+        : '-'}</td>
+    </tr>`).join('');
+}
+
+function filter(s,btn) {
+  document.querySelectorAll('.cat-btn').forEach(b=>{b.style.background='#fff';});
+  render(s==='ALL'?all:all.filter(a=>a.status===s));
+}
+
+async function cancel(id) {
+  if(!confirm('Cancel this appointment?')) return;
+  await fetch(`/api/appointments/${id}/status`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({status:'CANCELLED'})});
+  load();
+}
+function logout(){localStorage.clear();window.location.href='/auth/login.html';}
+load();
+</script>
+</body></html>

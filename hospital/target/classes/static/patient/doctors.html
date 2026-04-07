@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Find Doctors - City Hospital</title>
+<link rel="stylesheet" href="/css/style.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<style>
+.slot-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.slot-btn{padding:8px 16px;border:1.5px solid #1565c0;border-radius:8px;background:#fff;color:#1565c0;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s}
+.slot-btn:hover,.slot-btn.selected{background:#1565c0;color:#fff}
+.slot-btn:disabled{background:#f5f5f5;color:#bbb;border-color:#eee;cursor:not-allowed}
+.filter-bar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+.filter-bar select,.filter-bar input{padding:9px 13px;border:1.5px solid #ddd;border-radius:10px;font-size:.88rem}
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="brand">🏥 City Hospital</a>
+  <div class="nav-links">
+    <span id="userName" style="color:#fff;margin-right:12px;font-size:.88rem"></span>
+    <a href="/patient/appointments.html">My Appointments</a>
+    <a href="#" onclick="logout()">Logout</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-title">Find a Doctor 🔍</div>
+  <div class="page-sub">Search by department or name, pick a date and book your slot</div>
+
+  <div class="filter-bar">
+    <select id="deptFilter" onchange="filterDoctors()"><option value="">All Departments</option></select>
+    <input type="text" id="searchInput" placeholder="Search doctor name..." oninput="filterDoctors()" style="min-width:200px"/>
+  </div>
+
+  <div class="grid-2" id="doctorsGrid"></div>
+</div>
+
+<!-- Booking Modal -->
+<div class="modal-bg" id="bookModal">
+  <div class="modal">
+    <h3>📅 Book Appointment</h3>
+    <div id="selectedDocInfo" style="background:#f5f8ff;border-radius:10px;padding:12px;margin-bottom:16px;font-size:.88rem"></div>
+    <div class="form-group">
+      <label>Select Date</label>
+      <input type="text" id="datePicker" placeholder="Pick a date" readonly/>
+    </div>
+    <div class="form-group">
+      <label>Available Slots</label>
+      <div class="slot-grid" id="slotGrid"><p style="color:#aaa;font-size:.85rem">Select a date first</p></div>
+    </div>
+    <div class="form-group">
+      <label>Symptoms / Reason for Visit</label>
+      <textarea id="symptoms" rows="2" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:10px;font-size:.88rem" placeholder="Describe your symptoms briefly"></textarea>
+    </div>
+    <div id="bookMsg"></div>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn-blue" style="flex:1" onclick="confirmBooking()">Confirm Booking</button>
+      <button class="btn-outline" style="flex:1" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+document.getElementById('userName').textContent = localStorage.getItem('name') ? 'Hi, '+localStorage.getItem('name') : '';
+if (!token) { document.querySelectorAll('.nav-links a:not([href="/auth/login.html"])').forEach(a=>a.style.display='none'); }
+
+let allDoctors = [], selectedDoctor = null, selectedSlot = null;
+
+async function loadAll() {
+  const [depts, docs] = await Promise.all([
+    fetch('/api/public/departments').then(r=>r.json()),
+    fetch('/api/public/doctors').then(r=>r.json())
+  ]);
+  // Populate dept filter
+  const sel = document.getElementById('deptFilter');
+  depts.forEach(d=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=d.name; sel.appendChild(o); });
+  allDoctors = docs;
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('dept')) { sel.value = params.get('dept'); }
+  filterDoctors();
+}
+
+function filterDoctors() {
+  const dept   = document.getElementById('deptFilter').value;
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  let filtered = allDoctors;
+  if (dept)   filtered = filtered.filter(d=>d.department?.id==dept);
+  if (search) filtered = filtered.filter(d=>d.user?.name.toLowerCase().includes(search)||d.specialization?.toLowerCase().includes(search));
+  renderDoctors(filtered);
+}
+
+function renderDoctors(docs) {
+  if (!docs.length) { document.getElementById('doctorsGrid').innerHTML='<p style="color:#aaa;padding:40px">No doctors found</p>'; return; }
+  document.getElementById('doctorsGrid').innerHTML = docs.map(d=>`
+    <div class="doc-card">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+        <div class="doc-avatar">👨‍⚕️</div>
+        <div>
+          <div class="doc-name">${d.user?.name||'Doctor'}</div>
+          <div class="doc-spec">${d.specialization||''}</div>
+          <div class="stars">${'⭐'.repeat(Math.round(d.rating||4))} <span style="color:#888;font-size:.78rem">${d.rating||4.5}</span></div>
+        </div>
+      </div>
+      <div class="doc-info">🏥 ${d.department?.name||''}</div>
+      <div class="doc-info">🎓 ${d.qualification||''}</div>
+      <div class="doc-info">⏱ ${d.experienceYears||0} years experience</div>
+      <div class="doc-info">📅 ${d.availableDays||'Mon-Fri'} · ${d.availableFrom||'09:00'} - ${d.availableTo||'17:00'}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+        <span class="doc-fee">₹${d.consultationFee||0} / visit</span>
+        <button class="btn-blue" onclick="openBooking(${JSON.stringify(d).replace(/"/g,'&quot;')})">Book Now</button>
+      </div>
+    </div>`).join('');
+}
+
+let fp = null;
+function openBooking(doc) {
+  if (!token) { window.location.href='/auth/login.html'; return; }
+  selectedDoctor = doc; selectedSlot = null;
+  document.getElementById('selectedDocInfo').innerHTML = `<b>${doc.user?.name}</b> · ${doc.specialization} · ₹${doc.consultationFee}`;
+  document.getElementById('slotGrid').innerHTML = '<p style="color:#aaa;font-size:.85rem">Select a date first</p>';
+  document.getElementById('symptoms').value = '';
+  document.getElementById('bookMsg').innerHTML = '';
+  document.getElementById('bookModal').classList.add('open');
+
+  if (fp) fp.destroy();
+  fp = flatpickr('#datePicker', {
+    minDate:'today', maxDate: new Date().fp_incr(30),
+    onChange: async ([date]) => {
+      const d = date.toISOString().split('T')[0];
+      const res = await fetch(`/api/public/slots/${doc.id}?date=${d}`);
+      const slots = await res.json();
+      if (!slots.length) { document.getElementById('slotGrid').innerHTML='<p style="color:#f44336;font-size:.85rem">No slots available on this date</p>'; return; }
+      document.getElementById('slotGrid').innerHTML = slots.map(s=>`
+        <button class="slot-btn" onclick="selectSlot(this,'${s}')">${s}</button>`).join('');
+    }
+  });
+}
+
+function selectSlot(btn, slot) {
+  document.querySelectorAll('.slot-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected'); selectedSlot = slot;
+}
+
+async function confirmBooking() {
+  if (!fp?.selectedDates[0]) { showBookMsg('Please select a date','error'); return; }
+  if (!selectedSlot) { showBookMsg('Please select a time slot','error'); return; }
+  const date = fp.selectedDates[0].toISOString().split('T')[0];
+  const res  = await fetch('/api/appointments/book', {
+    method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body: JSON.stringify({ doctorId: selectedDoctor.id, date, timeSlot: selectedSlot, symptoms: document.getElementById('symptoms').value })
+  });
+  const data = await res.json();
+  if (data.id) {
+    closeModal();
+    alert(`✅ Appointment booked!\nDoctor: ${data.doctor}\nDate: ${data.date} at ${data.slot}\nYour Token: #${data.token}`);
+    window.location.href='/patient/appointments.html';
+  } else { showBookMsg(data.error||'Booking failed','error'); }
+}
+
+function showBookMsg(m,t){ document.getElementById('bookMsg').innerHTML=`<div class="alert alert-${t}">${m}</div>`; }
+function closeModal() { document.getElementById('bookModal').classList.remove('open'); }
+function logout() { localStorage.clear(); window.location.href='/'; }
+loadAll();
+</script>
+</body></html>

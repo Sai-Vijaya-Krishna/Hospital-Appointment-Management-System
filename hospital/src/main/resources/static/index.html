@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>City Hospital - Book Appointments Online</title>
+<link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+<nav class="navbar">
+  <div class="brand">🏥 City Hospital</div>
+  <div class="nav-links">
+    <a href="/patient/doctors.html">Find Doctors</a>
+    <a href="/auth/login.html" id="loginBtn">Login</a>
+    <a href="/patient/appointments.html" id="apptBtn" style="display:none">My Appointments</a>
+    <a href="#" id="logoutBtn" style="display:none" onclick="logout()">Logout</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <h1>Your Health, <span>Our Priority</span></h1>
+  <p>Book appointments with top doctors instantly. No waiting in queues.</p>
+  <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+    <a href="/patient/doctors.html" class="btn-primary">🔍 Find a Doctor</a>
+    <a href="/auth/login.html" class="btn-primary" style="background:rgba(255,255,255,.15);border:2px solid #fff;color:#fff" id="bookBtn">📅 Book Appointment</a>
+  </div>
+</section>
+
+<section class="page">
+  <h2 style="text-align:center;margin-bottom:8px;color:#1565c0">Our Departments</h2>
+  <p style="text-align:center;color:#888;margin-bottom:28px">Expert care across all specializations</p>
+  <div class="grid-4" id="deptGrid"></div>
+</section>
+
+<section style="background:#e3f2fd;padding:48px 32px;text-align:center;margin-top:40px">
+  <h2 style="color:#1565c0;margin-bottom:24px">Why Choose Us?</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;max-width:900px;margin:0 auto">
+    <div class="card"><div class="card-body" style="text-align:center"><div style="font-size:2.5rem;margin-bottom:10px">⚡</div><h3 style="color:#1565c0;margin-bottom:6px">Instant Booking</h3><p style="color:#666;font-size:.85rem">Book appointments in seconds</p></div></div>
+    <div class="card"><div class="card-body" style="text-align:center"><div style="font-size:2.5rem;margin-bottom:10px">🔢</div><h3 style="color:#1565c0;margin-bottom:6px">Token System</h3><p style="color:#666;font-size:.85rem">Know your queue position live</p></div></div>
+    <div class="card"><div class="card-body" style="text-align:center"><div style="font-size:2.5rem;margin-bottom:10px">💊</div><h3 style="color:#1565c0;margin-bottom:6px">Digital Prescriptions</h3><p style="color:#666;font-size:.85rem">Access prescriptions anytime</p></div></div>
+    <div class="card"><div class="card-body" style="text-align:center"><div style="font-size:2.5rem;margin-bottom:10px">📧</div><h3 style="color:#1565c0;margin-bottom:6px">Email Reminders</h3><p style="color:#666;font-size:.85rem">Never miss your appointment</p></div></div>
+  </div>
+</section>
+
+<footer class="footer"><p>© City Hospital. Built by  Vijaya Krishna</p></footer>
+
+<script>
+const token = localStorage.getItem('token');
+const role  = localStorage.getItem('role');
+if (token) {
+  document.getElementById('loginBtn').style.display = 'none';
+  document.getElementById('logoutBtn').style.display = 'inline';
+  document.getElementById('bookBtn').href = '/patient/doctors.html';
+  if (role === 'PATIENT') document.getElementById('apptBtn').style.display = 'inline';
+  if (role === 'ADMIN') window.location.href = '/admin/dashboard.html';
+  if (role === 'DOCTOR') window.location.href = '/doctor/queue.html';
+}
+async function loadDepts() {
+  const res = await fetch('/api/public/departments');
+  const depts = await res.json();
+  document.getElementById('deptGrid').innerHTML = depts.map(d => `
+    <div class="card" style="cursor:pointer" onclick="window.location.href='/patient/doctors.html?dept=${d.id}'">
+      <div class="card-body" style="text-align:center">
+        <div style="font-size:2rem;margin-bottom:8px">${d.icon || '🏥'}</div>
+        <div style="font-weight:700;font-size:.92rem;color:#1565c0;margin-bottom:4px">${d.name}</div>
+        <div style="font-size:.75rem;color:#888">${d.description}</div>
+      </div>
+    </div>`).join('');
+}
+function logout() { localStorage.clear(); window.location.reload(); }
+loadDepts();
+</script>
+</body>
+</html>

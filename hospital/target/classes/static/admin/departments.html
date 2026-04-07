@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Departments - Admin</title><link rel="stylesheet" href="/css/style.css"/></head>
+<body>
+<div class="admin-layout">
+  <div class="sidebar">
+    <div class="brand">🏥 Admin Panel</div>
+    <a href="/admin/dashboard.html">📊 Dashboard</a>
+    <a href="/admin/appointments.html">📋 Appointments</a>
+    <a href="/admin/doctors.html">👨‍⚕️ Doctors</a>
+    <a href="/admin/departments.html" class="active">🏥 Departments</a>
+    <a href="/admin/patients.html">👥 Patients</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </div>
+  <div class="main-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h1>Manage Departments</h1>
+      <button class="btn-blue" onclick="openModal()">+ Add Department</button>
+    </div>
+    <div id="msg"></div>
+    <div class="grid-3" id="deptGrid"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3>Add Department</h3>
+    <div class="form-group"><label>Department Name</label><input type="text" id="dName" placeholder="e.g. Cardiology"/></div>
+    <div class="form-group"><label>Description</label><input type="text" id="dDesc" placeholder="Short description"/></div>
+    <div class="form-group"><label>Icon (emoji)</label><input type="text" id="dIcon" placeholder="e.g. ❤️"/></div>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn-blue" style="flex:1" onclick="save()">Save</button>
+      <button class="btn-outline" style="flex:1" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const token=localStorage.getItem('token'),role=localStorage.getItem('role');
+if(!token||role!=='ADMIN') window.location.href='/auth/login.html';
+
+async function load() {
+  const res=await fetch('/api/public/departments');
+  const depts=await res.json();
+  document.getElementById('deptGrid').innerHTML=depts.map(d=>`
+    <div class="card">
+      <div class="card-body" style="text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:10px">${d.icon||'🏥'}</div>
+        <div style="font-weight:700;color:#1565c0;margin-bottom:4px">${d.name}</div>
+        <div style="font-size:.8rem;color:#888">${d.description||''}</div>
+      </div>
+    </div>`).join('');
+}
+
+async function save() {
+  const res=await fetch('/api/admin/departments',{method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body:JSON.stringify({name:document.getElementById('dName').value,description:document.getElementById('dDesc').value,icon:document.getElementById('dIcon').value})});
+  if(res.ok){closeModal();load();showMsg('Department added!','success');}
+  else showMsg('Failed to add','error');
+}
+
+function showMsg(m,t){document.getElementById('msg').innerHTML=`<div class="alert alert-${t}">${m}</div>`;setTimeout(()=>document.getElementById('msg').innerHTML='',3000);}
+function openModal(){document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function logout(){localStorage.clear();window.location.href='/auth/login.html';}
+load();
+</script>
+</body></html>

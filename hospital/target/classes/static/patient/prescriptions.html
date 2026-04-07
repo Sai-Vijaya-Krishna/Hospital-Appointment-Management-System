@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Prescriptions - City Hospital</title><link rel="stylesheet" href="/css/style.css"/></head>
+<body>
+<nav class="navbar">
+  <a href="/" class="brand">🏥 City Hospital</a>
+  <div class="nav-links"><a href="/patient/appointments.html">← Appointments</a></div>
+</nav>
+<div class="page" style="max-width:700px">
+  <div class="page-title">💊 My Prescriptions</div>
+  <div class="page-sub">Prescriptions from your completed appointments</div>
+  <div id="content"></div>
+</div>
+<script>
+const token  = localStorage.getItem('token');
+const params = new URLSearchParams(window.location.search);
+const apptId = params.get('apptId');
+if (!token) window.location.href='/auth/login.html';
+
+async function load() {
+  if (apptId) {
+    const res  = await fetch(`/api/doctor/prescription/${apptId}`,{headers:{'Authorization':'Bearer '+token}});
+    if (res.ok) { const p=await res.json(); renderSingle(p); }
+    else document.getElementById('content').innerHTML='<p style="color:#aaa;text-align:center;padding:40px">No prescription found for this appointment</p>';
+  }
+}
+
+function renderSingle(p) {
+  document.getElementById('content').innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,.08)">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #e3f2fd">
+        <div><div style="font-size:1.2rem;font-weight:700;color:#1565c0">🏥 City Hospital</div>
+          <div style="font-size:.82rem;color:#888">Prescription #${p.id}</div></div>
+        <div style="text-align:right"><div style="font-size:.85rem;color:#666">Date: ${p.prescribedDate}</div>
+          ${p.followUpDate?`<div style="font-size:.82rem;color:#f7931e">Follow-up: ${p.followUpDate}</div>`:''}</div>
+      </div>
+      <div style="margin-bottom:16px"><div style="font-size:.78rem;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:4px">Diagnosis</div>
+        <div style="font-size:.95rem;font-weight:600">${p.diagnosis||'--'}</div></div>
+      ${p.notes?`<div style="margin-bottom:16px"><div style="font-size:.78rem;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:4px">Doctor's Notes</div><div style="font-size:.88rem;color:#555">${p.notes}</div></div>`:''}
+      <div style="font-size:.78rem;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:10px">Medicines</div>
+      <table class="tbl">
+        <thead><tr><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th></tr></thead>
+        <tbody>${(p.medicines||[]).map(m=>`<tr><td><b>${m.medicineName}</b></td><td>${m.dosage}</td><td>${m.frequency}</td><td>${m.duration}</td><td>${m.instructions||'-'}</td></tr>`).join('')}</tbody>
+      </table>
+      <div style="margin-top:20px;padding:12px;background:#e3f2fd;border-radius:10px;font-size:.82rem;color:#1565c0">
+        ⚠️ Take medicines as prescribed. Contact hospital if symptoms worsen.
+      </div>
+    </div>`;
+}
+load();
+</script>
+</body></html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Write Prescription - City Hospital</title><link rel="stylesheet" href="/css/style.css"/></head>
+<body>
+<div class="admin-layout">
+  <div class="sidebar">
+    <div class="brand">👨‍⚕️ Doctor Portal</div>
+    <a href="/doctor/queue.html">📋 Today's Queue</a>
+    <a href="/doctor/prescription.html" class="active">💊 Write Prescription</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </div>
+  <div class="main-content" style="max-width:800px">
+    <h1 style="margin-bottom:6px">Write Prescription 💊</h1>
+    <p style="color:#888;font-size:.88rem;margin-bottom:24px">Appointment #<span id="apptId"></span></p>
+    <div id="msg"></div>
+
+    <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:20px">
+      <h3 style="margin-bottom:16px;color:#1565c0">Patient & Diagnosis</h3>
+      <div class="form-row">
+        <div class="form-group"><label>Diagnosis *</label><input type="text" id="diagnosis" placeholder="e.g. Viral Fever, Hypertension"/></div>
+        <div class="form-group"><label>Follow-up Date</label><input type="date" id="followUpDate"/></div>
+      </div>
+      <div class="form-group"><label>Doctor's Notes</label>
+        <textarea id="notes" rows="2" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:10px;font-size:.88rem" placeholder="Additional notes or instructions for patient"></textarea>
+      </div>
+    </div>
+
+    <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3 style="color:#1565c0">Medicines</h3>
+        <button class="btn-blue" onclick="addMed()">+ Add Medicine</button>
+      </div>
+      <div id="medsList"></div>
+    </div>
+
+    <button class="btn-blue" style="padding:14px 36px;font-size:1rem;font-weight:700" onclick="savePrescription()">💾 Save Prescription</button>
+  </div>
+</div>
+<script>
+const token  = localStorage.getItem('token');
+const role   = localStorage.getItem('role');
+if (!token||role!=='DOCTOR') window.location.href='/auth/login.html';
+const params = new URLSearchParams(window.location.search);
+const apptId = params.get('apptId');
+document.getElementById('apptId').textContent = apptId||'--';
+
+let meds = [];
+function addMed() {
+  meds.push({name:'',dosage:'',frequency:'',duration:'',instructions:''});
+  renderMeds();
+}
+function removeMed(i) { meds.splice(i,1); renderMeds(); }
+function renderMeds() {
+  if (!meds.length) { document.getElementById('medsList').innerHTML='<p style="color:#aaa;text-align:center;padding:20px">No medicines added yet</p>'; return; }
+  document.getElementById('medsList').innerHTML = meds.map((m,i)=>`
+    <div style="background:#f5f8ff;border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid #e3f2fd">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+        <span style="font-weight:600;color:#1565c0;font-size:.88rem">Medicine ${i+1}</span>
+        <button onclick="removeMed(${i})" style="background:none;border:none;color:#f44336;cursor:pointer;font-size:.85rem">✕ Remove</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:8px"><label>Medicine Name</label><input type="text" value="${m.name}" oninput="meds[${i}].name=this.value" placeholder="e.g. Paracetamol 500mg"/></div>
+        <div class="form-group" style="margin-bottom:8px"><label>Dosage</label><input type="text" value="${m.dosage}" oninput="meds[${i}].dosage=this.value" placeholder="e.g. 1 tablet"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:8px"><label>Frequency</label><input type="text" value="${m.frequency}" oninput="meds[${i}].frequency=this.value" placeholder="e.g. 3 times a day"/></div>
+        <div class="form-group" style="margin-bottom:8px"><label>Duration</label><input type="text" value="${m.duration}" oninput="meds[${i}].duration=this.value" placeholder="e.g. 5 days"/></div>
+      </div>
+      <div class="form-group" style="margin-bottom:0"><label>Instructions</label><input type="text" value="${m.instructions}" oninput="meds[${i}].instructions=this.value" placeholder="e.g. After meals"/></div>
+    </div>`).join('');
+}
+
+async function savePrescription() {
+  const diagnosis = document.getElementById('diagnosis').value;
+  if (!apptId) { showMsg('No appointment selected','error'); return; }
+  if (!diagnosis) { showMsg('Please enter diagnosis','error'); return; }
+  const res = await fetch('/api/doctor/prescription',{
+    method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body: JSON.stringify({ appointmentId:apptId, diagnosis, notes:document.getElementById('notes').value, followUpDate:document.getElementById('followUpDate').value, medicines:meds })
+  });
+  const data=await res.json();
+  if (data.id||data.message) { showMsg('Prescription saved successfully!','success'); setTimeout(()=>window.location.href='/doctor/queue.html',1500); }
+  else showMsg(data.error||'Save failed','error');
+}
+
+function showMsg(m,t){ document.getElementById('msg').innerHTML=`<div class="alert alert-${t}">${m}</div>`; window.scrollTo(0,0); }
+function logout() { localStorage.clear(); window.location.href='/auth/login.html'; }
+addMed();
+</script>
+</body></html>
