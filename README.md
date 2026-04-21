@@ -14,13 +14,14 @@ A comprehensive full-stack **Hospital Appointment Management System** with real-
 <img width="1919" height="916" alt="Homepage" src="https://github.com/user-attachments/assets/7db4716e-b973-4564-9fa3-c49c6efc05e6" />
 
 ### 👨‍⚕️ Doctor Dashboard
-![Doctor](screenshots/doctor-dashboard.png)
+<img width="1919" height="910" alt="Doctordashboard" src="https://github.com/user-attachments/assets/ba018c48-f1a8-453e-b037-8ee2fdae8ec5" />
 
 ### 📊 Admin Dashboard
-![Admin](screenshots/admin-dashboard.png)
+<img width="1919" height="907" alt="AdminDashboard" src="https://github.com/user-attachments/assets/1c0818f3-b184-4288-a310-a64bb58feda3" />
 
 ### 📅 Appointment Booking
-![Booking](screenshots/booking.png)
+<img width="1919" height="912" alt="Appointmentbooking" src="https://github.com/user-attachments/assets/d8cd5307-bd67-4a2a-98a4-9e67b76b3b8d" />
+
 
 ## ✨ Key Features
 
