@@ -9,6 +9,20 @@
 
 A comprehensive full-stack **Hospital Appointment Management System** with real-time features, role-based access control, and digital prescription management. Built to demonstrate enterprise-grade Spring Boot application development with JWT authentication, WebSocket real-time updates, and MySQL database integration.
 
+## 📸 Screenshots 
+### 🏠 Homepage
+![Homepage](<img width="1919" height="918" alt="image" src="https://github.com/user-attachments/assets/c68bd24c-c88f-4b0e-a12b-fa218311ba8a" />
+)
+
+### 👨‍⚕️ Doctor Dashboard
+![Doctor](screenshots/doctor-dashboard.png)
+
+### 📊 Admin Dashboard
+![Admin](screenshots/admin-dashboard.png)
+
+### 📅 Appointment Booking
+![Booking](screenshots/booking.png)
+
 ## ✨ Key Features
 
 ### 🔐 **Three-Role Authentication System**
