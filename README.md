@@ -11,7 +11,7 @@ A comprehensive full-stack **Hospital Appointment Management System** with real-
 
 ## 📸 Screenshots 
 ### 🏠 Homepage
-![Homepage](screenshots/<img width="1919" height="916" alt="Homepage" src="https://github.com/user-attachments/assets/7db4716e-b973-4564-9fa3-c49c6efc05e6" />
+(screenshots/<img width="1919" height="916" alt="Homepage" src="https://github.com/user-attachments/assets/7db4716e-b973-4564-9fa3-c49c6efc05e6" />
 )
 
 ### 👨‍⚕️ Doctor Dashboard
